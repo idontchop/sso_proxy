@@ -1,0 +1,86 @@
+spring:
+  application:
+    name: sso-proxy
+
+  # Database Configuration (H2 for development, change to SQL Server for production)
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+    # SQL Server Configuration (commented out - uncomment and update for production)
+    # url: jdbc:sqlserver://localhost:1433;databaseName=sso_proxy;encrypt=true;trustServerCertificate=true
+    # username: your_username
+    # password: your_password
+
+  # JPA/Hibernate Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    # database-platform: org.hibernate.dialect.SQLServerDialect  # Uncomment for SQL Server
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    format-sql: true
+
+  # H2 Console (for development only)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # ============================================
+  # Spring Cloud Gateway Configuration
+  # ============================================
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          # Example Route 1: User Service
+          # Routes /api/users/** to http://localhost:8082
+          - id: user-service
+            uri: http://localhost:8082
+            predicates:
+              - Path=/api/users/**
+            filters:
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+              - AddRequestHeader=X-Forwarded-By, SSO-Proxy
+
+          # Example Route 2: Product Service
+          # Routes /api/products/** to http://localhost:8083
+          - id: product-service
+            uri: http://localhost:8083
+            predicates:
+              - Path=/api/products/**
+            filters:
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+
+          # Example Route 3: Order Service with Path Rewriting
+          # Routes /api/orders/** to http://localhost:8084/order-api/**
+          # - id: order-service
+          #   uri: http://localhost:8084
+          #   predicates:
+          #     - Path=/api/orders/**
+          #   filters:
+          #     - RewritePath=/api/orders/(?<segment>.*), /order-api/$\{segment}
+          #     - AddRequestHeader=X-Gateway, SSO-Proxy
+
+        # Gateway Global Configuration
+        httpclient:
+          connect-timeout: 3000
+          response-timeout: 5000
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework.security: INFO
+    com.idontchop.sso_proxy: INFO
+
+# Server Configuration
+server:
+  port: 8080
+  
+  # Session Configuration
+  # Session timeout (24 hours of inactivity before user must re-login)
+  servlet:
+    session:
+      timeout: 24h
