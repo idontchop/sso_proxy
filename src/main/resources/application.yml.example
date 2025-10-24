@@ -1,0 +1,159 @@
+# ============================================
+# Spring Cloud Gateway Configuration (YAML Format)
+# ============================================
+# This is an ALTERNATIVE to application.properties
+# Use EITHER application.properties OR application.yml (not both)
+# To use this file, rename it to application.yml and delete/rename application.properties
+
+spring:
+  application:
+    name: sso-proxy
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  # JPA/Hibernate Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    format-sql: true
+  
+  # H2 Console (for development only)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # ============================================
+  # Spring Cloud Gateway Routes
+  # ============================================
+  cloud:
+    gateway:
+      mvc:
+        # Route 1: User Service
+        routes:
+          - id: user-service
+            uri: http://localhost:8082
+            predicates:
+              - Path=/api/users/**
+            filters:
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+              - AddRequestHeader=X-Forwarded-By, SSO-Proxy
+              # Optionally add user info from session
+              # - AddRequestHeader=X-User-Name, ${authentication.name}
+          
+          # Route 2: Product Service
+          - id: product-service
+            uri: http://localhost:8083
+            predicates:
+              - Path=/api/products/**
+            filters:
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+              - AddRequestHeader=X-Service, ProductService
+          
+          # Route 3: Order Service with Path Rewriting
+          - id: order-service
+            uri: http://localhost:8084
+            predicates:
+              - Path=/api/orders/**
+            filters:
+              - RewritePath=/api/orders/(?<segment>.*), /order-api/$\{segment}
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+          
+          # Route 4: Legacy API with Method Matching
+          - id: legacy-api
+            uri: http://localhost:8085
+            predicates:
+              - Path=/api/legacy/**
+              - Method=GET,POST
+            filters:
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+              - StripPrefix=1  # Removes /api from the path
+          
+          # Route 5: Admin Service (requires ADMIN role - configured in SecurityConfig)
+          - id: admin-service
+            uri: http://localhost:8086
+            predicates:
+              - Path=/api/admin/**
+            filters:
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+              - AddRequestHeader=X-Admin-Request, true
+          
+          # Route 6: External Service
+          - id: external-service
+            uri: https://api.external-service.com
+            predicates:
+              - Path=/api/external/**
+            filters:
+              - RewritePath=/api/external/(?<segment>.*), /v1/$\{segment}
+              - AddRequestHeader=X-Gateway, SSO-Proxy
+              - AddRequestHeader=Authorization, Bearer YOUR_API_KEY
+        
+        # Global HTTP Client Settings
+        httpclient:
+          connect-timeout: 3000  # 3 seconds
+          response-timeout: 5000  # 5 seconds
+          pool:
+            max-connections: 100
+            max-pending-acquires: 1000
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework.security: INFO
+    org.springframework.cloud.gateway: DEBUG
+    com.idontchop.sso_proxy: INFO
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m  # Session timeout
+      cookie:
+        http-only: true
+        # secure: true  # Uncomment for HTTPS in production
+        # same-site: strict  # Uncomment for production
+
+# ============================================
+# Production Configuration Example
+# ============================================
+# Uncomment and configure for production deployment
+
+# spring:
+#   datasource:
+#     url: jdbc:sqlserver://your-db-server:1433;databaseName=sso_proxy;encrypt=true;trustServerCertificate=false
+#     username: ${DB_USERNAME:admin}
+#     password: ${DB_PASSWORD:change_me}
+#   jpa:
+#     database-platform: org.hibernate.dialect.SQLServerDialect
+#     hibernate:
+#       ddl-auto: validate
+#   h2:
+#     console:
+#       enabled: false
+#   
+#   cloud:
+#     gateway:
+#       mvc:
+#         routes:
+#           - id: user-service
+#             uri: http://user-service:8080  # Docker service name
+#             # uri: https://user-service.production.com  # Production URL
+#             predicates:
+#               - Path=/api/users/**
+#             filters:
+#               - AddRequestHeader=X-Gateway, SSO-Proxy
+# 
+# server:
+#   servlet:
+#     session:
+#       cookie:
+#         secure: true
+#         same-site: strict

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSO Proxy - Angular App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        
+        .info-box h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        code {
+            background: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .api-list {
+            text-align: left;
+            margin: 1rem 0;
+        }
+        
+        .api-endpoint {
+            background: #fff;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid #667eea;
+            border-radius: 3px;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+        
+        .post { background: #28a745; color: white; }
+        .get { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SSO Proxy Backend Ready!</h1>
+        <p>Your Spring Boot backend is running and ready to serve your Angular application.</p>
+        
+        <div class="info-box">
+            <h3>📦 Next Steps:</h3>
+            <p><strong>1. Build your Angular app:</strong></p>
+            <p><code>ng build --configuration production</code></p>
+            
+            <p><strong>2. Copy the build output to Spring Boot:</strong></p>
+            <p>Copy all files from <code>dist/your-angular-app/browser/*</code> to<br>
+            <code>src/main/resources/static/</code></p>
+            
+            <p><strong>3. Restart Spring Boot:</strong></p>
+            <p>Your Angular app will be served from the root URL!</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>🔌 Available API Endpoints:</h3>
+            <div class="api-list">
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <strong>/api/auth/login</strong>
+                    <p style="margin: 0.5rem 0 0; color: #666;">Login with username and password</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <strong>/api/auth/logout</strong>
+                    <p style="margin: 0.5rem 0 0; color: #666;">Logout current user</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <strong>/api/auth/user</strong>
+                    <p style="margin: 0.5rem 0 0; color: #666;">Get current user information</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <strong>/api/auth/validate</strong>
+                    <p style="margin: 0.5rem 0 0; color: #666;">Validate JWT token</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>🔐 Test Credentials:</h3>
+            <p>Username: <code>admin</code> | Password: <code>password</code></p>
+            <p>Username: <code>user</code> | Password: <code>password</code></p>
+        </div>
+
+        <div class="info-box" style="background: #d4edda; border-left: 4px solid #28a745;">
+            <h3 style="color: #155724;">👤 Current User Status</h3>
+            <div id="userStatus" style="padding: 1rem; background: white; border-radius: 5px; margin-top: 0.5rem;">
+                <p style="margin: 0; color: #666;">Checking session...</p>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>🧪 Test Authentication:</h3>
+            <button id="loginBtn" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin: 0.5rem;">
+                Login as 'user'
+            </button>
+            <button id="getUserBtn" style="background: #28a745; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin: 0.5rem;">
+                Get User Info
+            </button>
+            <button id="logoutBtn" style="background: #dc3545; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin: 0.5rem;">
+                Logout
+            </button>
+        </div>
+
+        <div class="info-box" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+            <h3 style="color: #856404;">🚀 Test API Gateway Routes:</h3>
+            <p style="margin: 0.5rem 0; color: #856404; font-size: 0.9rem;">
+                <strong>Note:</strong> Make sure your backend services are running before testing these routes.
+            </p>
+            <button id="testUserServiceBtn" style="background: #007bff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin: 0.5rem;">
+                Test User Service (/api/users/1)
+            </button>
+            <button id="testProductServiceBtn" style="background: #17a2b8; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin: 0.5rem;">
+                Test Product Service (/api/products)
+            </button>
+            <button id="testGatewayPlaceholderBtn" style="background: #6c757d; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin: 0.5rem;">
+                Test Placeholder Route
+            </button>
+            <div id="result" style="margin-top: 1rem; padding: 1rem; background: #e9ecef; border-radius: 5px; text-align: left; font-family: monospace; font-size: 0.9rem; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+        const userStatusDiv = document.getElementById('userStatus');
+
+        // ============================================
+        // Utility Functions
+        // ============================================
+        
+        function displayResult(title, data) {
+            resultDiv.innerHTML = `<strong>${title}</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        async function apiRequest(url, options = {}) {
+            const defaultOptions = {
+                credentials: 'include',
+                ...options
+            };
+            return await fetch(url, defaultOptions);
+        }
+
+        // ============================================
+        // User Status Management
+        // ============================================
+        
+        async function checkCurrentUser() {
+            try {
+                const response = await apiRequest('/api/auth/user');
+
+                if (response.ok) {
+                    const user = await response.json();
+                    userStatusDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <p style="margin: 0; font-size: 1.1rem; color: #155724;">
+                                    <strong>✅ Logged in as:</strong> ${user.username}
+                                </p>
+                                <p style="margin: 0.5rem 0 0; color: #666; font-size: 0.9rem;">
+                                    Email: ${user.email} | Role: ${user.role}
+                                </p>
+                            </div>
+                            <div style="font-size: 2rem;">👤</div>
+                        </div>
+                    `;
+                } else {
+                    userStatusDiv.innerHTML = `
+                        <p style="margin: 0; color: #721c24;">
+                            <strong>❌ Not logged in</strong>
+                        </p>
+                        <p style="margin: 0.5rem 0 0; color: #666; font-size: 0.9rem;">
+                            Click "Login as 'user'" to authenticate
+                        </p>
+                    `;
+                }
+            } catch (error) {
+                userStatusDiv.innerHTML = `
+                    <p style="margin: 0; color: #856404;">
+                        <strong>⚠️ Error checking session</strong>
+                    </p>
+                    <p style="margin: 0.5rem 0 0; color: #666; font-size: 0.9rem;">
+                        ${error.message}
+                    </p>
+                `;
+            }
+        }
+
+        // ============================================
+        // Gateway Test Handler
+        // ============================================
+        
+        async function testGatewayRoute(url, serviceName, backendUrl) {
+            try {
+                displayResult('⏳ Testing...', { message: `Calling ${url} through gateway...` });
+                
+                const response = await apiRequest(url);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult(`✅ ${serviceName} Response (via Gateway)`, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: data,
+                        note: `This request was routed through the gateway to ${backendUrl}`
+                    });
+                } else if (response.status === 500) {
+                    const text = await response.text();
+                    if (text.includes('ConnectException') || text.includes('Connection refused')) {
+                        displayResult('❌ Backend Service Not Running (500)', {
+                            message: `Cannot connect to ${serviceName} at ${backendUrl}`,
+                            suggestion: `The gateway is working! Start your ${serviceName} on ${backendUrl.split('//')[1]} to see it route requests.`,
+                            technicalDetails: 'Gateway tried to forward the request but the backend service is not available',
+                            nextSteps: [
+                                `1. Create a Spring Boot app listening on ${backendUrl.split('//')[1]}`,
+                                `2. Add a ${url} endpoint that returns data`,
+                                '3. Try this button again - the gateway will forward your request!'
+                            ]
+                        });
+                    } else {
+                        displayResult('❌ Internal Server Error (500)', {
+                            status: response.status,
+                            body: text.substring(0, 500) + '...'
+                        });
+                    }
+                } else if (response.status === 502) {
+                    displayResult('❌ Bad Gateway (502)', {
+                        message: `Backend service at ${backendUrl} is not responding`,
+                        suggestion: `Make sure your ${serviceName} is running`
+                    });
+                } else if (response.status === 401) {
+                    displayResult('❌ Unauthorized (401)', {
+                        message: 'You need to login first',
+                        suggestion: 'Click "Login as \'user\'" button above'
+                    });
+                } else {
+                    const text = await response.text();
+                    displayResult('❌ Error Response', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: text
+                    });
+                }
+            } catch (error) {
+                displayResult('❌ Network Error', { 
+                    message: error.message,
+                    suggestion: 'Check if the gateway route is configured correctly in application.properties'
+                });
+            }
+        }
+
+        // ============================================
+        // Event Handlers - Authentication
+        // ============================================
+        
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            try {
+                const response = await apiRequest('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'user', password: 'password' })
+                });
+
+                const data = await response.json();
+                displayResult(response.ok ? '✅ Login Successful!' : '❌ Login Failed', data);
+                if (response.ok) checkCurrentUser();
+            } catch (error) {
+                displayResult('❌ Error', { message: error.message });
+            }
+        });
+
+        document.getElementById('getUserBtn').addEventListener('click', async () => {
+            try {
+                const response = await apiRequest('/api/auth/user');
+                const data = await response.json();
+                displayResult(response.ok ? '✅ User Info Retrieved!' : '❌ Not Authenticated', data);
+            } catch (error) {
+                displayResult('❌ Error', { message: error.message });
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                const response = await apiRequest('/api/auth/logout', { method: 'POST' });
+                const data = await response.json();
+                displayResult(response.ok ? '✅ Logout Successful!' : '❌ Logout Failed', data);
+                if (response.ok) checkCurrentUser();
+            } catch (error) {
+                displayResult('❌ Error', { message: error.message });
+            }
+        });
+
+        // ============================================
+        // Event Handlers - Gateway Tests
+        // ============================================
+        
+        document.getElementById('testUserServiceBtn').addEventListener('click', () => {
+            testGatewayRoute('/api/users/1', 'User Service', 'http://localhost:8082');
+        });
+
+        document.getElementById('testProductServiceBtn').addEventListener('click', () => {
+            testGatewayRoute('/api/products/help', 'Product Service', 'http://localhost:8083/test');
+        });
+
+        document.getElementById('testGatewayPlaceholderBtn').addEventListener('click', async () => {
+            try {
+                displayResult('⏳ Testing...', { message: 'Calling /api/gateway-placeholder/test...' });
+                const response = await apiRequest('/api/gateway-placeholder/test');
+
+                if (response.ok) {
+                    const text = await response.text();
+                    displayResult('✅ Placeholder Route Response', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        message: text,
+                        note: 'This is a placeholder route configured in GatewayConfig.java. Replace it with your actual routes!'
+                    });
+                } else if (response.status === 401) {
+                    displayResult('❌ Unauthorized (401)', {
+                        message: 'You need to login first',
+                        suggestion: 'Click "Login as \'user\'" button above'
+                    });
+                } else {
+                    const text = await response.text();
+                    displayResult('❌ Error Response', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: text
+                    });
+                }
+            } catch (error) {
+                displayResult('❌ Network Error', { message: error.message });
+            }
+        });
+
+        // ============================================
+        // Initialize
+        // ============================================
+        
+        window.addEventListener('DOMContentLoaded', checkCurrentUser);
+    </script>
+</body>
+</html>
